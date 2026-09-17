@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>همراه حفظ قرآن — برنامه ۶ ماهه</title>
+<style>
+:root{--bg:#f5f7f2;--card:#fff;--ink:#17221b;--muted:#68766d;--green:#176047;--green2:#2c8565;--gold:#c89b3c;--line:#e4e9e4;--soft:#edf5f0}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 10% 0%,#e8f2ec,transparent 30%),var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif}
+header{background:linear-gradient(135deg,#103e2e,#1e674c 65%,#2d7d5e);color:#fff;padding:34px 18px 30px;text-align:center;position:relative;overflow:hidden}
+header:after{content:"☾  ✦  ۞  ✦  ☽";position:absolute;inset:auto 0 4px;font-size:28px;opacity:.12;letter-spacing:18px}
+h1{font-size:30px;margin:0 0 8px}.sub{opacity:.9;margin:0}
+.wrap{max-width:1200px;margin:auto;padding:18px}
+.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:15px;margin-top:-20px;position:relative}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 30px #123c2010}
+.quote{background:linear-gradient(135deg,#fff,#f1f8f3);border-right:5px solid var(--gold)}
+.quote b{color:var(--green);font-size:18px}.quote p{line-height:2;margin:9px 0 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{text-align:center;background:#fff;border-radius:15px;padding:13px;border:1px solid var(--line)}.stat strong{display:block;font-size:25px;color:var(--green);margin-top:5px}
+.section{margin-top:16px}.section h2{font-size:20px;color:var(--green);margin:0 0 10px}
+.progress{height:13px;background:#e4ebe6;border-radius:20px;overflow:hidden}.progress div{height:100%;background:linear-gradient(90deg,var(--green),#57a77f);width:0;transition:.25s}
+.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.controls input,.controls select,.controls button{font:inherit;padding:10px;border-radius:10px;border:1px solid #ccd8cf;background:#fff}.controls button{background:var(--green);color:#fff;border:0;cursor:pointer}.controls button.alt{background:#eaf1ec;color:var(--green)}.controls button.red{background:#9a4040}
+.plan{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.plan .item{padding:15px;border-radius:15px;background:var(--soft);border:1px solid #dce9e0}.num{font-size:24px;color:var(--gold);font-weight:bold}
+table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:18px}
+th{background:#eaf2ed;color:var(--green);padding:11px;font-size:13px;position:sticky;top:0;z-index:2}td{padding:8px;border-top:1px solid var(--line);vertical-align:top}td.day{font-weight:bold;text-align:center;white-space:nowrap}td textarea{width:100%;min-height:55px;border:1px solid #d5ded8;border-radius:8px;padding:7px;font:inherit;resize:vertical}td input[type=checkbox]{width:22px;height:22px;accent-color:var(--green)}
+tr.done{background:#f0f8f3}.badge{display:inline-block;padding:4px 8px;border-radius:99px;font-size:11px;background:#e8eee9;color:var(--green)}.badge.friday{background:#fff3d8;color:#765516}
+.small{font-size:12px;color:var(--muted);line-height:1.8}
+.today{border:2px solid #b7d7c4;background:#fbfffc}
+.rotation{font-size:17px;line-height:2}.rotation strong{color:var(--green)}
+footer{text-align:center;color:var(--muted);padding:25px}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.plan{grid-template-columns:1fr}table{font-size:12px}th:nth-child(5),td:nth-child(5){display:none}}
+@media print{.controls,footer{display:none}body{background:#fff}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<header>
+<h1>📖 همراه حفظ قرآن کریم</h1>
+<p class="sub">دفتر دیجیتال ۱۸۰ روزه برای تکمیل حفظ، مرور و تثبیت</p>
+</header>
+
+<div class="wrap" style="padding-top:0">
+<div class="section card" id="authCard">
+  <h2>☁️ ورود و همگام‌سازی</h2>
+  <div id="authLoggedOut">
+    <div class="small" style="margin-bottom:10px">با حساب شخصی خودت وارد شو تا ثبت‌های روزانه بین موبایل و کامپیوتر همگام شود.</div>
+    <div class="controls">
+      <input id="authEmail" type="email" placeholder="ایمیل" autocomplete="email" style="min-width:220px;flex:1">
+      <input id="authPassword" type="password" placeholder="رمز عبور" autocomplete="current-password" style="min-width:180px;flex:1">
+      <button onclick="signIn()">ورود</button>
+      <button class="alt" onclick="signUp()">ثبت‌نام</button>
+      <button class="alt" onclick="resetPassword()">بازیابی رمز</button>
+    </div>
+  </div>
+  <div id="authLoggedIn" style="display:none">
+    <div class="controls">
+      <span class="badge">🟢 وارد شده</span>
+      <span id="authUserEmail" class="small"></span>
+      <button class="alt" onclick="syncNow()">☁️ همگام‌سازی</button>
+      <button class="red" onclick="signOut()">خروج</button>
+    </div>
+  </div>
+  <div id="syncStatus" class="small" style="margin-top:8px">حالت محلی: اطلاعات این دستگاه در مرورگر ذخیره می‌شود.</div>
+</div>
+</div>
+
+<div class="wrap">
+<div class="hero">
+  <div class="card quote">
+    <b>🌿 قانون اصلی برنامه</b>
+    <p>هر روزِ غیرجمعه: <b>درس جدید + مرور سبق‌های قبلی + مرور نوبتی جزءهای کامل‌شده.</b><br>
+    جمعه: <b>درس جدید نداریم</b>؛ فقط مرور و تثبیت محفوظات.</p>
+  </div>
+  <div class="card">
+    <div class="small">هدف روزانه</div>
+    <div style="font-size:25px;color:var(--green);font-weight:bold" id="dailyTarget">۳ صفحه</div>
+    <div class="small">این مقدار قابل تغییر است.</div>
+  </div>
+</div>
+
+<div class="section">
+<div class="stats">
+ <div class="stat">روزهای انجام‌شده<strong id="done">۰</strong></div>
+ <div class="stat">پیشرفت<strong id="pct">۰٪</strong></div>
+ <div class="stat">صفحات هدف<strong id="pages">۰</strong></div>
+ <div class="stat">روز باقی‌مانده<strong id="left">۱۸۰</strong></div>
+</div>
+<div style="margin-top:10px" class="progress"><div id="bar"></div></div>
+</div>
+
+<div class="section card">
+<h2>⚙️ تنظیم برنامه</h2>
+<div class="controls">
+<label>صفحه در روز <input id="target" type="number" min="1" max="10" value="3" style="width:75px"></label>
+<label>تعداد جزء کامل‌شده <input id="juz" type="number" min="0" max="30" value="0" style="width:75px"></label>
+<button onclick="saveSettings()">ذخیره تنظیمات</button>
+<button class="alt" onclick="window.print()">🖨 چاپ</button>
+<button class="alt" onclick="backup()">⬇ پشتیبان</button>
+<button class="alt" onclick="restore()">⬆ بازیابی</button>
+<button class="red" onclick="resetAll()">پاک کردن اطلاعات</button>
+</div>
+<div class="small" style="margin-top:8px">جزءهای کامل‌شده وارد چرخه مرور نوبتی می‌شوند. مثال: اگر ۳ جزء کامل شده باشد، نوبت مرور: جزء ۱ → ۲ → ۳ → دوباره ۱.</div>
+</div>
+
+<div class="section card">
+<h2>🔄 مرور نوبتی امروز</h2>
+<div class="rotation" id="rotation"></div>
+</div>
+
+<div class="section">
+<h2>🗓️ سه قانون ثابت روزانه</h2>
+<div class="plan">
+ <div class="item"><span class="num">۱</span><br><b>درس جدید</b><br><span class="small">روزهای شنبه تا پنجشنبه، مقدار تعیین‌شده را حفظ/بازیابی کن.</span></div>
+ <div class="item"><span class="num">۲</span><br><b>سبق قبلی</b><br><span class="small">تمام صفحات حفظ‌شده از بخش در حال تکمیل را مرور کن تا جزء کامل شود.</span></div>
+ <div class="item"><span class="num">۳</span><br><b>اجزاء کامل</b><br><span class="small">پس از تکمیل هر جزء، آن را وارد مرور نوبتی کن و هر روز طبق نوبت بخوان.</span></div>
+</div>
+</div>
+
+<div class="section">
+<div class="controls" style="margin-bottom:10px">
+<select id="filter"><option value="all">همه ۱۸۰ روز</option><option value="week">هفته‌ها</option><option value="friday">فقط جمعه‌ها</option></select>
+<input id="search" placeholder="🔎 جستجو..." style="flex:1;min-width:180px">
+<button onclick="checkVisible()">✓/↩ انتخاب/لغو همه روزهای نمایش‌داده‌شده</button>
+</div>
+<table>
+<thead><tr>
+<th>روز</th><th>انجام شد</th><th>📖 درس جدید</th><th>🔁 سبق قبلی</th><th>🔄 مرور جزءهای کامل</th><th>⚠️ اشکالات</th><th>📝 یادداشت</th>
+</tr></thead>
+<tbody id="body"></tbody>
+</table>
+</div>
+
+<footer>🤲 «وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ» — هدف این دفتر: نظم، تکرار و استمرار.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://tswalgvipjqrquvtbmhc.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_joE8k1LYoAjymHcb8UskkA_lfVKouT_";
+let supabaseClient = null;
+try {
+  if (!window.supabase || !window.supabase.createClient) {
+    throw new Error("کتابخانه اتصال Supabase بارگذاری نشد.");
+  }
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+} catch (e) {
+  console.error(e);
+  window.__supabaseInitError = e;
+}
+const KEY="quran6plan_v2";
+const blankRows=()=>Array.from({length:180},(_,i)=>({day:i+1,done:false,new:"",review:"",rotation:"",mistakes:"",notes:""}));
+let state=JSON.parse(localStorage.getItem(KEY)||"null") || {target:4,juz:0,rows:blankRows()};
+if(!Array.isArray(state.rows)||state.rows.length!==180) state.rows=blankRows();
+if(!state.target) state.target=4;
+let cloudSyncTimer=null;
+let currentUser=null;
+const fa=n=>Number(n).toLocaleString("fa-IR");
+function localSave(){localStorage.setItem(KEY,JSON.stringify(state));updateStats();updateRotation();}
+function save(){localSave(); if(currentUser){clearTimeout(cloudSyncTimer);cloudSyncTimer=setTimeout(syncNow,500);} }
+function settings(){document.getElementById("target").value=state.target;document.getElementById("juz").value=state.juz;document.getElementById("dailyTarget").textContent=fa(state.target)+" صفحه";}
+function saveSettings(){state.target=Math.max(1,Math.min(10,Number(document.getElementById("target").value)||4));state.juz=Math.max(0,Math.min(30,Number(document.getElementById("juz").value)||0));save();settings();render();}
+function isFriday(day){return ((day-1)%7)===5}
+function rotationFor(day){
+ if(state.juz<1)return "هنوز جزء کاملی ثبت نشده است. <b>تمام صفحات حفظ‌شده تا امروز</b> را هر روز مرور کن.";
+ const idx=(day-1)%state.juz+1;
+ return `امروز نوبت <strong>جزء ${fa(idx)}</strong> از ${fa(state.juz)} جزء کامل‌شده است. <span class="small">پس از جزء ${fa(state.juz)} دوباره از جزء ۱ شروع می‌شود.</span>`;
+}
+function updateRotation(){const d=state.rows.find(r=>!r.done)?.day || 180;document.getElementById("rotation").innerHTML=rotationFor(d);}
+function updateStats(){
+ const done=state.rows.filter(r=>r.done).length;
+ const pages=state.rows.filter(r=>r.done&&!isFriday(r.day)).length*state.target;
+ document.getElementById("done").textContent=fa(done);document.getElementById("left").textContent=fa(180-done);
+ document.getElementById("pct").textContent=fa(Math.round(done/180*100))+"٪";document.getElementById("pages").textContent=fa(pages);
+ document.getElementById("bar").style.width=(done/180*100)+"%";
+}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function render(){
+ const f=document.getElementById("filter").value,q=document.getElementById("search").value.toLowerCase().trim(), tb=document.getElementById("body");tb.innerHTML="";
+ state.rows.forEach((r,i)=>{
+  if(f==="friday"&&!isFriday(r.day))return;
+  if(f==="week"&&Math.floor((r.day-1)/7)%2!==0)return;
+  const txt=(r.new+" "+r.review+" "+r.rotation+" "+r.mistakes+" "+r.notes).toLowerCase();
+  if(q&&!txt.includes(q)&&!String(r.day).includes(q))return;
+  const fri=isFriday(r.day), tr=document.createElement("tr"); if(r.done)tr.className="done";
+  const label=fri?'<span class="badge friday">جمعه · فقط مرور</span>':'<span class="badge">درس جدید</span>';
+  const newText=fri?'امروز درس جدید نداریم. مرور کامل انجام بده.':`حفظ/بازیابی ${fa(state.target)} صفحه`;
+  tr.innerHTML=`<td class="day">روز ${fa(r.day)}<br>${label}<div class="small">${fri?'مرور کامل':'حفظ جدید'}</div></td>
+  <td style="text-align:center"><input type="checkbox" ${r.done?'checked':''}></td>
+  <td><textarea placeholder="${newText}">${esc(r.new)}</textarea></td>
+  <td><textarea placeholder="همه صفحات سبقِ حفظ‌شده را مرور کن...">${esc(r.review)}</textarea></td>
+  <td><textarea placeholder="${rotationFor(r.day).replace(/<[^>]+>/g,'')}">${esc(r.rotation)}</textarea></td>
+  <td><textarea placeholder="آیات مشکل، اشتباهات و نقاط ضعف...">${esc(r.mistakes)}</textarea></td>
+  <td><textarea placeholder="یادداشت امروز...">${esc(r.notes)}</textarea></td>`;
+  tr.querySelector("input").onchange=e=>{state.rows[i].done=e.target.checked;save();render()};
+  const keys=["new","review","rotation","mistakes","notes"];
+  tr.querySelectorAll("textarea").forEach((el,j)=>el.oninput=e=>{state.rows[i][keys[j]]=e.target.value;save()});
+  tb.appendChild(tr);
+ });
+ updateStats();updateRotation();settings();
+}
+function checkVisible(){
+ const f=document.getElementById("filter").value,q=document.getElementById("search").value.toLowerCase().trim();
+ const visible=state.rows.filter(r=>{
+   const txt=(r.new+" "+r.review+" "+r.rotation+" "+r.mistakes+" "+r.notes).toLowerCase();
+   return (f==="all"||(f==="friday"&&isFriday(r.day))||(f==="week"&&Math.floor((r.day-1)/7)%2===0))&&(!q||txt.includes(q)||String(r.day).includes(q));
+ });
+ const allChecked=visible.length>0 && visible.every(r=>r.done);
+ visible.forEach(r=>r.done=!allChecked);
+ save(); render();
+}
+function backup(){const b=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="quran-6-month-backup.json";a.click()}
+function restore(){const i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(x.rows?.length===180){state=x;localSave();render();if(currentUser)syncNow();}else alert("فایل معتبر نیست.")}catch{alert("فایل معتبر نیست.")}};r.readAsText(f)};i.click()}
+function resetAll(){if(confirm("همه ثبت‌های ۱۸۰ روز پاک شود؟")){state={target:4,juz:0,rows:blankRows()};save();render()}}
+function setStatus(text){document.getElementById("syncStatus").textContent=text;}
+function showLoggedIn(user){currentUser=user;document.getElementById("authLoggedOut").style.display="none";document.getElementById("authLoggedIn").style.display="block";document.getElementById("authUserEmail").textContent=user.email||"";}
+function showLoggedOut(){currentUser=null;document.getElementById("authLoggedOut").style.display="block";document.getElementById("authLoggedIn").style.display="none";document.getElementById("authUserEmail").textContent="";setStatus("حالت محلی: اطلاعات این دستگاه در مرورگر ذخیره می‌شود.");}
+async function signUp(){
+ if(!supabaseClient){alert("اتصال به Supabase برقرار نشد. صفحه را یک‌بار با Ctrl+F5 تازه‌سازی کن.");return;}
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||!password){alert("ایمیل و رمز عبور را وارد کن.");return}
+ if(password.length<6){alert("رمز عبور باید حداقل ۶ کاراکتر باشد.");return}
+ setStatus("در حال ثبت‌نام...");
+ const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
+ if(error){setStatus("خطا در ثبت‌نام");alert(error.message);return}
+ if(data.session){showLoggedIn(data.user);await syncNow();}
+ else setStatus("ثبت‌نام انجام شد. ایمیل تأیید را باز کن، سپس وارد سایت شو.");
+}
+async function signIn(){
+ if(!supabaseClient){alert("اتصال به Supabase برقرار نشد. صفحه را یک‌بار با Ctrl+F5 تازه‌سازی کن.");return;}
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||!password){alert("ایمیل و رمز عبور را وارد کن.");return}
+ setStatus("در حال ورود...");
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+ if(error){setStatus("ورود ناموفق بود");alert(error.message);return}
+ showLoggedIn(data.user);await syncNow();
+}
+async function resetPassword(){
+ if(!supabaseClient){alert("اتصال به Supabase برقرار نشد. صفحه را یک‌بار با Ctrl+F5 تازه‌سازی کن.");return;}
+ const email=document.getElementById("authEmail").value.trim();
+ if(!email){alert("ابتدا ایمیلت را وارد کن.");return}
+ const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+ if(error)alert(error.message);else alert("لینک بازیابی رمز به ایمیلت فرستاده شد.");
+}
+async function signOut(){await supabaseClient.auth.signOut();showLoggedOut();}
+function cloudPayload(r){return {user_id:currentUser.id,day_number:r.day,completed:!!r.done,new_lesson:r.new||"",previous_sabaq:r.review||"",juz_review:r.rotation||"",mistakes:r.mistakes||"",notes:r.notes||""};}
+function fromCloud(x){return {day:x.day_number,done:!!x.completed,new:x.new_lesson||"",review:x.previous_sabaq||"",rotation:x.juz_review||"",mistakes:x.mistakes||"",notes:x.notes||""};}
+async function syncNow(){
+ if(!currentUser)return;
+ setStatus("☁️ در حال همگام‌سازی...");
+ const localRows=state.rows;
+ const {data:cloudRows,error}=await supabaseClient.from("daily_progress").select("day_number,completed,new_lesson,previous_sabaq,juz_review,mistakes,notes").eq("user_id",currentUser.id).order("day_number");
+ if(error){setStatus("خطا در خواندن اطلاعات ابری");console.error(error);return}
+ // First login: upload local device data if cloud is empty. Otherwise cloud is authoritative.
+ if(cloudRows.length===0){
+   const payload=localRows.map(cloudPayload);
+   const {error:upErr}=await supabaseClient.from("daily_progress").upsert(payload,{onConflict:"user_id,day_number"});
+   if(upErr){setStatus("خطا در ذخیره اطلاعات ابری");console.error(upErr);return}
+ } else {
+   const merged=blankRows();
+   cloudRows.forEach(x=>{if(x.day_number>=1&&x.day_number<=180)merged[x.day_number-1]=fromCloud(x)});
+   state.rows=merged;
+   localSave();
+ }
+ setStatus("☁️ همگام شد — آخرین ذخیره در ابر انجام شد.");
+ render();
+}
+async function initAuth(){
+ if(!supabaseClient){
+   setStatus("⚠️ اتصال ابری برقرار نشد؛ اطلاعات محلی همچنان فعال است.");
+   return;
+ }
+ const {data}=await supabaseClient.auth.getSession();
+ if(data.session){showLoggedIn(data.session.user);await syncNow();}
+ else showLoggedOut();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{
+   if(session&&!currentUser){showLoggedIn(session.user);setTimeout(syncNow,0)}
+   else if(!session)showLoggedOut();
+ });
+}
+document.getElementById("filter").onchange=render;document.getElementById("search").oninput=render;render();initAuth();
+</script>
+</body>
+</html>
