@@ -38,6 +38,31 @@ footer{text-align:center;color:var(--muted);padding:25px}
 <p class="sub">دفتر دیجیتال ۱۸۰ روزه برای تکمیل حفظ، مرور و تثبیت</p>
 </header>
 
+<div class="wrap" style="padding-top:0">
+<div class="section card" id="authCard">
+  <h2>☁️ ورود و همگام‌سازی</h2>
+  <div id="authLoggedOut">
+    <div class="small" style="margin-bottom:10px">با حساب شخصی خودت وارد شو تا ثبت‌های روزانه بین موبایل و کامپیوتر همگام شود.</div>
+    <div class="controls">
+      <input id="authEmail" type="email" placeholder="ایمیل" autocomplete="email" style="min-width:220px;flex:1">
+      <input id="authPassword" type="password" placeholder="رمز عبور" autocomplete="current-password" style="min-width:180px;flex:1">
+      <button onclick="signIn()">ورود</button>
+      <button class="alt" onclick="signUp()">ثبت‌نام</button>
+      <button class="alt" onclick="resetPassword()">بازیابی رمز</button>
+    </div>
+  </div>
+  <div id="authLoggedIn" style="display:none">
+    <div class="controls">
+      <span class="badge">🟢 وارد شده</span>
+      <span id="authUserEmail" class="small"></span>
+      <button class="alt" onclick="syncNow()">☁️ همگام‌سازی</button>
+      <button class="red" onclick="signOut()">خروج</button>
+    </div>
+  </div>
+  <div id="syncStatus" class="small" style="margin-top:8px">حالت محلی: اطلاعات این دستگاه در مرورگر ذخیره می‌شود.</div>
+</div>
+</div>
+
 <div class="wrap">
 <div class="hero">
   <div class="card quote">
@@ -108,14 +133,21 @@ footer{text-align:center;color:var(--muted);padding:25px}
 </div>
 
 <script>
+const SUPABASE_URL="https://tswalgvipjqrquvtbmhc.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_joE8k1LYoAjymHcb8UskkA_lfVKouT_";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const KEY="quran6plan_v2";
-let state=JSON.parse(localStorage.getItem(KEY)||"null") || {
- target:3,juz:0, rows:Array.from({length:180},(_,i)=>({day:i+1,done:false,new:"",review:"",rotation:"",mistakes:"",notes:""}))
-};
+const blankRows=()=>Array.from({length:180},(_,i)=>({day:i+1,done:false,new:"",review:"",rotation:"",mistakes:"",notes:""}));
+let state=JSON.parse(localStorage.getItem(KEY)||"null") || {target:4,juz:0,rows:blankRows()};
+if(!Array.isArray(state.rows)||state.rows.length!==180) state.rows=blankRows();
+if(!state.target) state.target=4;
+let cloudSyncTimer=null;
+let currentUser=null;
 const fa=n=>Number(n).toLocaleString("fa-IR");
-function save(){localStorage.setItem(KEY,JSON.stringify(state));updateStats();updateRotation();}
+function localSave(){localStorage.setItem(KEY,JSON.stringify(state));updateStats();updateRotation();}
+function save(){localSave(); if(currentUser){clearTimeout(cloudSyncTimer);cloudSyncTimer=setTimeout(syncNow,500);} }
 function settings(){document.getElementById("target").value=state.target;document.getElementById("juz").value=state.juz;document.getElementById("dailyTarget").textContent=fa(state.target)+" صفحه";}
-function saveSettings(){state.target=Math.max(1,Math.min(10,Number(document.getElementById("target").value)||3));state.juz=Math.max(0,Math.min(30,Number(document.getElementById("juz").value)||0));save();settings();render();}
+function saveSettings(){state.target=Math.max(1,Math.min(10,Number(document.getElementById("target").value)||4));state.juz=Math.max(0,Math.min(30,Number(document.getElementById("juz").value)||0));save();settings();render();}
 function isFriday(day){return ((day-1)%7)===5}
 function rotationFor(day){
  if(state.juz<1)return "هنوز جزء کاملی ثبت نشده است. <b>تمام صفحات حفظ‌شده تا امروز</b> را هر روز مرور کن.";
@@ -124,7 +156,8 @@ function rotationFor(day){
 }
 function updateRotation(){const d=state.rows.find(r=>!r.done)?.day || 180;document.getElementById("rotation").innerHTML=rotationFor(d);}
 function updateStats(){
- const done=state.rows.filter(r=>r.done).length, pages=state.rows.filter(r=>r.done&&!isFriday(r.day)).length*state.target;
+ const done=state.rows.filter(r=>r.done).length;
+ const pages=state.rows.filter(r=>r.done&&!isFriday(r.day)).length*state.target;
  document.getElementById("done").textContent=fa(done);document.getElementById("left").textContent=fa(180-done);
  document.getElementById("pct").textContent=fa(Math.round(done/180*100))+"٪";document.getElementById("pages").textContent=fa(pages);
  document.getElementById("bar").style.width=(done/180*100)+"%";
@@ -148,7 +181,8 @@ function render(){
   <td><textarea placeholder="آیات مشکل، اشتباهات و نقاط ضعف...">${esc(r.mistakes)}</textarea></td>
   <td><textarea placeholder="یادداشت امروز...">${esc(r.notes)}</textarea></td>`;
   tr.querySelector("input").onchange=e=>{state.rows[i].done=e.target.checked;save();render()};
-  const keys=["new","review","rotation","mistakes","notes"];tr.querySelectorAll("textarea").forEach((el,j)=>el.oninput=e=>{state.rows[i][keys[j]]=e.target.value;save()});
+  const keys=["new","review","rotation","mistakes","notes"];
+  tr.querySelectorAll("textarea").forEach((el,j)=>el.oninput=e=>{state.rows[i][keys[j]]=e.target.value;save()});
   tb.appendChild(tr);
  });
  updateStats();updateRotation();settings();
@@ -164,9 +198,69 @@ function checkVisible(){
  save(); render();
 }
 function backup(){const b=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="quran-6-month-backup.json";a.click()}
-function restore(){const i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(x.rows?.length===180){state=x;save();render()}else alert("فایل معتبر نیست.")}catch{alert("فایل معتبر نیست.")}};r.readAsText(f)};i.click()}
-function resetAll(){if(confirm("همه ثبت‌های ۱۸۰ روز پاک شود؟")){state={target:3,juz:0,rows:Array.from({length:180},(_,i)=>({day:i+1,done:false,new:"",review:"",rotation:"",mistakes:"",notes:""}))};save();render()}}
-document.getElementById("filter").onchange=render;document.getElementById("search").oninput=render;render();
-</script>
+function restore(){const i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(x.rows?.length===180){state=x;localSave();render();if(currentUser)syncNow();}else alert("فایل معتبر نیست.")}catch{alert("فایل معتبر نیست.")}};r.readAsText(f)};i.click()}
+function resetAll(){if(confirm("همه ثبت‌های ۱۸۰ روز پاک شود؟")){state={target:4,juz:0,rows:blankRows()};save();render()}}
+function setStatus(text){document.getElementById("syncStatus").textContent=text;}
+function showLoggedIn(user){currentUser=user;document.getElementById("authLoggedOut").style.display="none";document.getElementById("authLoggedIn").style.display="block";document.getElementById("authUserEmail").textContent=user.email||"";}
+function showLoggedOut(){currentUser=null;document.getElementById("authLoggedOut").style.display="block";document.getElementById("authLoggedIn").style.display="none";document.getElementById("authUserEmail").textContent="";setStatus("حالت محلی: اطلاعات این دستگاه در مرورگر ذخیره می‌شود.");}
+async function signUp(){
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||!password){alert("ایمیل و رمز عبور را وارد کن.");return}
+ if(password.length<6){alert("رمز عبور باید حداقل ۶ کاراکتر باشد.");return}
+ setStatus("در حال ثبت‌نام...");
+ const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
+ if(error){setStatus("خطا در ثبت‌نام");alert(error.message);return}
+ if(data.session){showLoggedIn(data.user);await syncNow();}
+ else setStatus("ثبت‌نام انجام شد. ایمیل تأیید را باز کن، سپس وارد سایت شو.");
+}
+async function signIn(){
+ const email=document.getElementById("authEmail").value.trim(),password=document.getElementById("authPassword").value;
+ if(!email||!password){alert("ایمیل و رمز عبور را وارد کن.");return}
+ setStatus("در حال ورود...");
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+ if(error){setStatus("ورود ناموفق بود");alert(error.message);return}
+ showLoggedIn(data.user);await syncNow();
+}
+async function resetPassword(){
+ const email=document.getElementById("authEmail").value.trim();
+ if(!email){alert("ابتدا ایمیلت را وارد کن.");return}
+ const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+ if(error)alert(error.message);else alert("لینک بازیابی رمز به ایمیلت فرستاده شد.");
+}
+async function signOut(){await supabaseClient.auth.signOut();showLoggedOut();}
+function cloudPayload(r){return {user_id:currentUser.id,day_number:r.day,completed:!!r.done,new_lesson:r.new||"",previous_sabaq:r.review||"",juz_review:r.rotation||"",mistakes:r.mistakes||"",notes:r.notes||""};}
+function fromCloud(x){return {day:x.day_number,done:!!x.completed,new:x.new_lesson||"",review:x.previous_sabaq||"",rotation:x.juz_review||"",mistakes:x.mistakes||"",notes:x.notes||""};}
+async function syncNow(){
+ if(!currentUser)return;
+ setStatus("☁️ در حال همگام‌سازی...");
+ const localRows=state.rows;
+ const {data:cloudRows,error}=await supabaseClient.from("daily_progress").select("day_number,completed,new_lesson,previous_sabaq,juz_review,mistakes,notes").eq("user_id",currentUser.id).order("day_number");
+ if(error){setStatus("خطا در خواندن اطلاعات ابری");console.error(error);return}
+ // First login: upload local device data if cloud is empty. Otherwise cloud is authoritative.
+ if(cloudRows.length===0){
+   const payload=localRows.map(cloudPayload);
+   const {error:upErr}=await supabaseClient.from("daily_progress").upsert(payload,{onConflict:"user_id,day_number"});
+   if(upErr){setStatus("خطا در ذخیره اطلاعات ابری");console.error(upErr);return}
+ } else {
+   const merged=blankRows();
+   cloudRows.forEach(x=>{if(x.day_number>=1&&x.day_number<=180)merged[x.day_number-1]=fromCloud(x)});
+   state.rows=merged;
+   localSave();
+ }
+ setStatus("☁️ همگام شد — آخرین ذخیره در ابر انجام شد.");
+ render();
+}
+async function initAuth(){
+ const {data}=await supabaseClient.auth.getSession();
+ if(data.session){showLoggedIn(data.session.user);await syncNow();}
+ else showLoggedOut();
+ supabaseClient.auth.onAuthStateChange((_event,session)=>{
+   if(session&&!currentUser){showLoggedIn(session.user);setTimeout(syncNow,0)}
+   else if(!session)showLoggedOut();
+ });
+}
+document.getElementById("filter").onchange=render;document.getElementById("search").oninput=render;render();initAuth();
+</script></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>
